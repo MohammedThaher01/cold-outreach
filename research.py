@@ -22,28 +22,44 @@ def scrape(url: str, limit: int = 4000) -> str:
 
 
 def research_company(company_name: str, company_url: str | None = None) -> dict:
-    results = search(
-        f"{company_name} AI startup India news OR careers OR product OR blog", 5
-    )
+    # If no URL provided, guess it from the company name or email domain
+    if not company_url:
+        # Remove spaces from company name to guess domain
+        domain_guess = company_name.lower().replace(" ", "") + ".com"
+        company_url = f"https://{domain_guess}"
+
+    results = []
+    try:
+        # Simpler query that DuckDuckGo likes better
+        results = search(f'"{company_name}" product OR features OR pricing')
+        if not results:
+            results = search(company_name)
+    except Exception:
+        pass # Ignore search failures and rely on the website scrape
+
     snippets = "\n\n".join(
         f"[{r.get('title','')}] {r.get('href','')}\n{r.get('body','')}" for r in results
     )
 
     page_text = ""
-    source_url = company_url or ""
+    source_url = company_url
+
+    # 1. Scrape the provided/guessed URL directly
     if company_url:
         page_text = scrape(company_url)
-    else:
-        needle = company_name.lower().replace(" ", "")
-        for r in results:
+
+    # 2. If the homepage failed, try scraping the top 2 search results
+    if len(page_text) < 100 and results:
+        for r in results[:2]:
             href = r.get("href", "")
-            if needle in href.lower().replace("-", "").replace(".", ""):
+            if href:
                 page_text = scrape(href)
-                source_url = href
-                break
+                if len(page_text) > 100:
+                    source_url = href
+                    break
 
     user_msg = f"""company_name: {company_name}
-company_url: {source_url or 'unknown'}
+company_url: {source_url}
 
 SEARCH RESULTS:
 {snippets}

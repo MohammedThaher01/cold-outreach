@@ -35,9 +35,8 @@ def _send_with_cap(rows, cap, sent_today):
             send.send_email(r["email"], r["subject"], r["body"])
             store.update(r["email"], status="sent", sent_at=_now().isoformat())
             sent_today += 1
-            delay = random.randint(45, 60)
-            print(f"  sent. waiting {delay}s")
-            time.sleep(delay)
+            print(f"  sent. Exiting so cron can wait an hour for the next one.")
+            return sent_today  # <--- THIS IS THE MAGIC LINE. It sends 1 and stops.
         except Exception as e:
             print(f"  failed: {e}")
     return sent_today
@@ -53,7 +52,7 @@ def run_once():
 
     # Phase 1: research NEW rows
     for r in store.load():
-        if r["status"] != "NEW":
+        if r["status"].strip() != "NEW":
             continue
         company, url = r["company_name"], r["company_url"]
         if not company:

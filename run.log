@@ -1,0 +1,131 @@
+cat << 'EOF' > run.sh
+#!/bin/bash
+source ~/.zshrc
+cd /Users/mohammedthahers/Desktop/Projects/Production/cold-email/cold-outreach
+.venv/bin/python main.py run >> run.log 2>&1
+EOF
+chmod +x run.sh
+
+
+
+
+ath
+Python runtime state: core initialized
+
+Current thread 0x00000001f1e72180 (most recent call first):
+  <no Python frame>
+Exception ignored in running getpath:
+Traceback (most recent call last):
+  File "<frozen getpath>", line 270, in <module>
+OSError: failed to make path absolute
+Fatal Python error: error evaluating path
+Python runtime state: core initialized
+
+Current thread 0x00000001f1e72180 (most recent call first):
+  <no Python frame>
+Exception ignored in running getpath:
+Traceback (most recent call last):
+  File "<frozen getpath>", line 270, in <module>
+OSError: failed to make path absolute
+Fatal Python error: error evaluating path
+Python runtime state: core initialized
+
+Current thread 0x00000001f1e72180 (most recent call first):
+  <no Python frame>
+Exception ignored in running getpath:
+Traceback (most recent call last):
+  File "<frozen getpath>", line 270, in <module>
+OSError: failed to make path absolute
+Fatal Python error: error evaluating path
+Python runtime state: core initialized
+
+Current thread 0x00000001f1e72180 (most recent call first):
+  <no Python frame>
+Exception ignored in running getpath:
+Traceback (most recent call last):
+  File "<frozen getpath>", line 270, in <module>
+OSError: failed to make path absolute
+Fatal Python error: error evaluating path
+Python runtime state: core initialized
+
+Current thread 0x00000001f1e72180 (most recent call first):
+  <no Python frame>
+loaded 18 leads, 0 with status NEW
+Fatal Python error: init_import_site: Failed to import the site module
+Python runtime state: initialized
+Fatal Python error: init_import_site: Failed to import the site module
+Python runtime state: initialized
+Traceback (most recent call last):
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1176, in exec_module
+  File "<frozen site>", line 710, in <module>
+  File "<frozen site>", line 693, in main
+  File "<frozen site>", line 611, in venv
+PermissionError: [Errno 1] Operation not permitted: '/Users/mohammedthahers/Desktop/Projects/Production/cold-email/cold-outreach/.venv/pyvenv.cfg'
+Traceback (most recent call last):
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 1176, in exec_module
+  File "<frozen site>", line 710, in <module>
+  File "<frozen site>", line 693, in main
+  File "<frozen site>", line 611, in venv
+PermissionError: [Errno 1] Operation not permitted: '/Users/mohammedthahers/Desktop/Projects/Production/cold-email/cold-outreach/.venv/pyvenv.cfg'
+loaded 18 leads, 0 with status NEW
+loaded 31 leads, 12 with status NEW
+researching WRENCH WISE...
+  ok: The site states that if the trade‑in device’s value exceeds the price 
+researching Sorim Technologies...
+  ok: They offer end-to-end BOT solutions to automate processes and boost op
+researching Hakuna Matata Technologies...
+  ok: Humata’s pricing is a self‑serve monthly subscription with Free, Stude
+researching Stitch...
+  ok: DRAWings Snap is the first embroidery App to purchase and export desig
+researching CyberFreezeDev...
+  ok: They install open-weight language models such as Llama, Qwen and Mistr
+researching Mahadhi Technologies...
+  skipped (weak evidence)
+researching Open Weaver...
+  ok: Agency Partnerships – freelancers, IT services firms or agencies can b
+researching Innovative Infotech...
+  ok: Production-grade AI, data engineering, and agentic systems built for t
+researching Saasta Software & Services...
+  skipped (weak evidence)
+researching CronCrew Technologies...
+  ok: They provide web and mobile application development services, explicit
+researching Jasmin Infotech...
+  skipped (weak evidence)
+researching HyperOrbit...
+  ok: HyperOrbit offers a lease‑to‑own option for premium domains at $480 pe
+writing email for Infer...
+  subject: meeting scheduling ai
+writing email for WRENCH WISE...
+  subject: trade-in friction fix
+writing email for Sorim Technologies...
+  subject: bot guardrails for reliability
+writing email for Hakuna Matata Technologies...
+  subject: budget-friendly doc chat
+writing email for Stitch...
+  subject: visual ai at stitch
+writing email for CyberFreezeDev...
+  failed: Error code: 400 - {'error': {'message': "Failed to validate JSON. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': ''}}
+writing email for Open Weaver...
+  subject: quality checks for AI sites
+writing email for Innovative Infotech...
+  subject: guardrails for banking ai
+writing email for CronCrew Technologies...
+  subject: ai support for learners
+writing email for HyperOrbit...
+  failed: Error code: 400 - {'error': {'message': "Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_request_error', 'code': 'json_validate_failed', 'failed_generation': 'max completion tokens reached before generating a valid document'}}
+auto-approved: vaibhav@infer.so
+auto-approved: hr@wrenchwise.com
+auto-approved: janani.srinivasan@sorimtechnologies.com
+auto-approved: hr@hakunamatatatech.com
+auto-approved: careers@stitch.co
+auto-approved: careers@openweaver.com
+auto-approved: careers@innovative2all.com
+auto-approved: careers@croncrewtechnologies.com
+sending to vaibhav@infer.so...
+  sent. Exiting so cron can wait an hour for the next one.
