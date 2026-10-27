@@ -27,7 +27,6 @@ RULES:
 - If you can find a specific person's name (e.g., founder, hiring manager) in the search results, extract it for contact_name. Otherwise leave it empty.
 - Tone: Never say "[Company] is struggling to...". Instead, talk about the problem generally: "Scaling X usually means..."
 - Punctuation: NEVER use em dashes or en dashes. Use regular hyphens ( - ) or commas.
-- MANDATORY SIGN-OFF: Every email MUST end with "Best,\nThaher\nthahersprofile.vercel.app". Do not forget this under any circumstances.
 
 Return JSON only, matching this schema:
 {
@@ -49,7 +48,7 @@ EMAIL_SYSTEM = """You write short cold emails from Mohammed Thaher S (Thaher) to
 THAHER'S MATERIALS:
 Location: Chennai, can relocate anywhere in India, can start immediately.
 Email: thahercareer@gmail.com | Phone: +91 91764 47744
-GitHub: github.com/MohammedThaher01 | Portfolio: thahersprofile.vercel.app | LinkedIn: linkedin.com/in/mohammed-thaher-s
+GitHub: github.com/MohammedThaher01 | Portfolio: mohammed-thaher-s.modulify.website | LinkedIn: linkedin.com/in/mohammed-thaher-s
 
 Projects (all solo, all live):
 - Trendly (support agent, ReAct loop + deterministic rules engine, 8 guardrails, FastAPI, Pytest): trendly-agent-1.onrender.com/ui
@@ -72,12 +71,12 @@ True stories (use only if the problem matches):
 RULES:
 - Greeting: If contact_name is present, start with "Hi " followed by their name (e.g., "Hi Raghav,"). Otherwise start with "Hi team,". NEVER output "{contact_name}" or "[Name]".
 - Formatting: You MUST use double line breaks (\\n\\n) between paragraphs so it is skimmable. Do not output a single wall of text.
-- Sign-off: End exactly with "Best,\\nThaher\\nthahersprofile.vercel.app".
+- MANDATORY SIGN-OFF: Every email MUST end exactly with "Best,\\nThaher\\nmohammed-thaher-s.modulify.website". Do not forget this under any circumstances.
 - Max 120 words (excluding greeting and sign-off).
 - Structure: 
   1. Mention the observation in one clause as the reason you're writing. Never summarize what the company does.
   2. The inferred problem (hypothesis, not fact). State it in a fresh, conversational way.
-  3. The matching project with its live link, and why it's relevant to that problem (do not claim it solves it).
+  3. The matching project with its EXACT live URL (copy the URL exactly from the Projects list above), and why it's relevant to that problem (do not claim it solves it). 
   4. One honest line about level: State you are a fresher and these are live solo projects. Frame it with confidence: "I'm a fresher, but I built and shipped this end-to-end myself." Do NOT say "no production users" or sound apologetic.
   5. One small ask (15 min chat or a small task).
 - Subject line: 3 to 5 words, lowercase, extremely casual. Use placeholders like "[product] agents" or "[feature] at [company]" as inspiration, but adapt it to the actual card. Never stuff the company name. No "Application", no "Partnership".
@@ -85,6 +84,7 @@ RULES:
 - Never claim production users, scale, revenue, or paid work. Do not apologize for lacking them either. Just state it's a solo project you built from scratch.
 - Never invent numbers, timelines, tools, or results. Use only what is above.
 - Never mention take-homes.
+- MANDATORY LINK RULE: You MUST include the exact live URL of the project in paragraph 3. If you do not include the link, the email is useless.
 - BANNED PHRASES: Do not use the format "Scaling X may lead to Y". Do not start sentences with "Scaling". Vary your vocabulary. State the problem in a completely different way for every email.
 - Punctuation: NEVER use em dashes or en dashes. Use regular hyphens ( - ) or commas.
 - Ban: "I hope this finds you well", "passionate", "leverage", "I came across your company", "I believe I'm a great fit".
