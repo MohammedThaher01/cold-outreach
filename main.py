@@ -33,10 +33,14 @@ def _send_with_cap(rows, cap, sent_today):
         try:
             print(f"sending to {r['email']}...")
             send.send_email(r["email"], r["subject"], r["body"])
-            store.update(r["email"], status="sent", sent_at=_now().isoformat())
+            
+            # If it's a follow-up, mark it as followed_up so it doesn't send again.
+            new_status = "followed_up" if r["subject"].startswith("Re: ") else "sent"
+            store.update(r["email"], status=new_status, sent_at=_now().isoformat())
+            
             sent_today += 1
             print(f"  sent. Exiting so cron can wait an hour for the next one.")
-            return sent_today  # <--- THIS IS THE MAGIC LINE. It sends 1 and stops.
+            return sent_today  # Sends 1 and stops so cron can handle the pacing.
         except Exception as e:
             print(f"  failed: {e}")
     return sent_today
@@ -121,13 +125,53 @@ def run_once():
     rows = store.load()
     sent_today = sum(
         1 for r in rows
-        if r["status"] == "sent" and (r.get("sent_at") or "").startswith(_today())
+        if r["status"] in ["sent", "followed_up"] and (r.get("sent_at") or "").startswith(_today())
     )
     _send_with_cap(rows, cap, sent_today)
 
 
 def cmd_run(_args):
     run_once()
+
+
+def cmd_followup(_args):
+    today = datetime.date.today()
+    rows = store.load()
+    generated_count = 0
+    
+    for r in rows:
+        # Only follow up on emails that were sent, not ones that already got a follow-up or bounced.
+        if r["status"] != "sent" or not r.get("sent_at"):
+            continue
+            
+        sent_date = datetime.datetime.fromisoformat(r["sent_at"]).date()
+        days_since = (today - sent_date).days
+        
+        if days_since >= 5:
+            print(f"generating follow-up for {r['email']} (sent {days_since} days ago)...")
+            
+            contact_name = ""
+            try:
+                card = json.loads(r.get("insight_card", "{}"))
+                contact_name = card.get("contact_name", "")
+            except:
+                pass
+                
+            try:
+                out = generate.generate_followup(r["subject"], r["body"], contact_name)
+                store.update(
+                    r["email"], 
+                    status="approved", 
+                    subject=out["subject"], 
+                    body=out["body"]
+                )
+                print(f"  ready: {out['subject']}")
+                generated_count += 1
+            except Exception as e:
+                print(f"  failed: {e}")
+                
+    if generated_count == 0:
+        print("No emails are ready for follow-up today.")
 
 
 def cmd_add(args):
@@ -174,12 +218,17 @@ def cmd_reject(args):
     print(f"rejected {args.email}")
 
 
+def cmd_bounce(args):
+    store.update(args.email, status="bounced")
+    print(f"marked {args.email} as bounced")
+
+
 def cmd_digest(_args):
     today = _today()
     rows = store.load()
     sent_today = [
         r for r in rows
-        if r["status"] == "sent" and (r.get("sent_at") or "").startswith(today)
+        if r["status"] in ["sent", "followed_up"] and (r.get("sent_at") or "").startswith(today)
     ]
     skipped = [r for r in rows if r["status"] == "skipped"]
     review = [r for r in rows if r["status"] == "needs_manual_research"]
@@ -217,6 +266,9 @@ def main():
     sub.add_parser("run", help="full pipeline: research, generate, send").set_defaults(func=cmd_run)
     sub.add_parser("list", help="show drafts awaiting review").set_defaults(func=cmd_list)
     sub.add_parser("digest", help="send a daily summary to SELF_EMAIL").set_defaults(func=cmd_digest)
+    
+    f = sub.add_parser("followup", help="generate follow-ups for emails sent 5+ days ago")
+    f.set_defaults(func=cmd_followup)
 
     a = sub.add_parser("add", help="add a lead from the command line")
     a.add_argument("email")
@@ -230,6 +282,10 @@ def main():
     rj = sub.add_parser("reject", help="reject a draft by email")
     rj.add_argument("email")
     rj.set_defaults(func=cmd_reject)
+
+    b = sub.add_parser("bounce", help="mark an email as bounced")
+    b.add_argument("email")
+    b.set_defaults(func=cmd_bounce)
 
     args = p.parse_args()
     args.func(args)

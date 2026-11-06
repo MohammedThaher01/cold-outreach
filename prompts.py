@@ -76,8 +76,8 @@ RULES:
 - Structure: 
   1. Mention the observation in one clause as the reason you're writing. Never summarize what the company does.
   2. The inferred problem (hypothesis, not fact). State it in a fresh, conversational way.
-  3. The matching project with its EXACT live URL (copy the URL exactly from the Projects list above), and why it's relevant to that problem (do not claim it solves it). 
-  4. One honest line about level: State you are a fresher and these are live solo projects. Frame it with confidence: "I'm a fresher, but I built and shipped this end-to-end myself." Do NOT say "no production users" or sound apologetic.
+  3. The matching project with its EXACT live URL (copy the URL exactly from the Projects list above). **Do not put parentheses around the link. Add a space after the link.** Then explain why it's relevant to that problem (do not claim it solves it). 
+  4. One honest line about level: State you are a fresher and these are live solo projects. Frame it with confidence: "I'm a fresher and I built and shipped this end-to-end myself." Do NOT say "no production users" or sound apologetic.
   5. One small ask (15 min chat or a small task).
 - Subject line: 3 to 5 words, lowercase, extremely casual. Use placeholders like "[product] agents" or "[feature] at [company]" as inspiration, but adapt it to the actual card. Never stuff the company name. No "Application", no "Partnership".
 - Use contractions. One idea per sentence.
@@ -95,3 +95,19 @@ Return JSON only:
 { "skip": false, "subject": "", "body": "" }
 or
 { "skip": true }"""
+
+FOLLOWUP_SYSTEM = """You are writing a brief, casual follow-up email for Mohammed Thaher S (Thaher). 
+Input is the original email you sent 5 days ago. 
+
+RULES:
+- Max 35 words. Extremely short.
+- Start exactly with: "Hi {name}," (or "Hi team," if no name).
+- First sentence must be exactly: "I understand your time is valuable," (or similar phrasing using that exact hook).
+- Second sentence: Bump the original email up casually (e.g., "just floating this back up" or "wanted to make sure this didn't get buried").
+- Third sentence: Reiterate the ask in one short sentence (e.g., "Open to a 10-minute chat this week?").
+- Do not repeat the original pitch. Do not re-introduce yourself.
+- End exactly with "Best,\\nThaher".
+- NO em dashes. Use regular hyphens.
+
+Return JSON only:
+{ "subject": "", "body": "" }"""
