@@ -23,38 +23,71 @@ def _today():
     return _now().date().isoformat()
 
 
-def _send_with_cap(rows, cap, sent_today):
+def _send_with_cap(rows):
+    now = _now()
+    
+    # 1. Check business hours (9 AM - 5 PM Asia/Kolkata)
+    if not (9 <= now.hour < 17):
+        print("Outside business hours. Skipping send.")
+        return 0
+        
+    # 2. Calendar-hour bucket check
+    sends_this_hour = 0
+    last_send_time = None
+    
+    for r in rows:
+        if r["status"] in ["SENT", "FOLLOWED_UP"] and r.get("sent_at"):
+            try:
+                sent_dt = datetime.datetime.fromisoformat(r["sent_at"])
+                if sent_dt.tzinfo is None:
+                    sent_dt = sent_dt.replace(tzinfo=TZ)
+                
+                # Check if in same calendar year, month, day, and hour
+                if (sent_dt.year == now.year and sent_dt.month == now.month and 
+                    sent_dt.day == now.day and sent_dt.hour == now.hour):
+                    sends_this_hour += 1
+                    
+                # Track most recent successful send overall
+                if not last_send_time or sent_dt > last_send_time:
+                    last_send_time = sent_dt
+            except:
+                pass
+                
+    # Enforce Max 2 per calendar hour
+    if sends_this_hour >= config.HOURLY_CAP:
+        print(f"Calendar hour cap ({config.HOURLY_CAP}) reached. Stopping.")
+        return 0
+        
+    # Enforce Min 30 minutes between sends
+    if last_send_time and (now - last_send_time).total_seconds() < 1800:
+        print("Less than 30 minutes since last successful send. Stopping.")
+        return 0
+
+    # 3. Send exactly 1 email
+    sent_count = 0
     for r in rows:
         if r["status"] != "APPROVED":
             continue
-        if sent_today >= cap:
-            print(f"daily cap {cap} reached, stopping")
-            return sent_today
+        if sent_count >= 1: # Max 1 per execution
+            break
+            
         try:
             print(f"sending to {r['email']}...")
-            
             is_followup = r["subject"].startswith("Re: ")
             in_reply_to = r.get("message_id") if is_followup else None
             
-            new_msg_id = send.send_email(
-                r["email"], r["subject"], r["body"], 
-                in_reply_to=in_reply_to
-            )
+            # If this throws an exception, the code jumps to 'except', 
+            # meaning store.update is NOT called, so it doesn't count.
+            new_msg_id = send.send_email(r["email"], r["subject"], r["body"], in_reply_to=in_reply_to)
             
             new_status = "FOLLOWED_UP" if is_followup else "SENT"
-            store.update(
-                r["email"], 
-                status=new_status, 
-                sent_at=_now().isoformat(),
-                message_id=new_msg_id
-            )
+            store.update(r["email"], status=new_status, sent_at=_now().isoformat(), message_id=new_msg_id)
+            sent_count += 1
             
-            sent_today += 1
-            print(f"  sent. Exiting so cron can wait an hour for the next one.")
-            return sent_today
         except Exception as e:
             print(f"  failed: {e}")
-    return sent_today
+            
+    return sent_count
 
 
 def run_once():

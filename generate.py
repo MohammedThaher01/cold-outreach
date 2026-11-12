@@ -21,16 +21,18 @@ def validate_email(body: str) -> bool:
         print("  validation failed: missing correct portfolio link")
         return False
         
-    if "[INSERT ACTUAL RESUME LINK" in body:
-        print("  validation failed: resume link placeholder not replaced")
+    # 3. Check for EXACT resume link
+    resume_url = "https://drive.google.com/file/d/1d5lYhjRRsHIQXgmCjRAC3C3wRIKdYyiy/view?usp=sharing"
+    if resume_url not in body:
+        print("  validation failed: missing or incorrect resume link")
         return False
         
-    # 3. Check for placeholders
-    if "{name}" in body or "[Name]" in body:
-        print("  validation failed: unresolved name placeholder")
+    # 4. Check for placeholders
+    if "{name}" in body or "[Name]" in body or "[resume link]" in body:
+        print("  validation failed: unresolved placeholder")
         return False
         
-    # 4. Word count (excluding signature)
+    # 5. Word count (excluding signature)
     inner = re.sub(r'Best,[\s\S]*$', '', body).strip()
     word_count = len(inner.split())
     if word_count > 120:
@@ -40,6 +42,7 @@ def validate_email(body: str) -> bool:
     return True
 
 def generate_email(card: dict) -> dict:
+    # Gate 1: Research Validation
     if card.get("skip") or card.get("confidence") == "low":
         return {"skip": True}
 
@@ -57,13 +60,14 @@ def generate_email(card: dict) -> dict:
     if not out.get("subject") or not out.get("body"):
         return {"skip": True}
         
+    # Gate 2: Email Validation
     if not validate_email(out["body"]):
         return {"skip": True}
         
     return out
 
 def generate_followup(original_subject: str, original_body: str, contact_name: str = "team") -> dict:
-    if not contact_name:
+    if not contact_name or contact_name.lower() in ["", "mohammed", "thaher"]:
         contact_name = "team"
         
     resp = client.chat.completions.create(
@@ -77,7 +81,6 @@ def generate_followup(original_subject: str, original_body: str, contact_name: s
     )
     out = json.loads(resp.choices[0].message.content)
     
-    # Force the subject to be a reply
     clean_subject = original_subject.replace("Re: ", "")
     out["subject"] = f"Re: {clean_subject}"
     

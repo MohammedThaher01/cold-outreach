@@ -5,28 +5,44 @@ A specific feature on their homepage, a description on their pricing page, or a 
 
 Avoid generic observations like "they use AI" or "they are growing". If you cannot find something specific and verifiable, set skip=true.
 
-Then infer ONE plausible technical or business problem that signal suggests. Phrase it as a hypothesis, not a fact.
+TECHNICAL INFERENCE RULES:
+- Never assume a company's internal architecture from its customer-facing features.
+- A feature supporting file uploads does NOT establish that the company has storage or scalability problems.
+- A feature supporting exports does NOT establish that the company has synchronization, latency, or reliability problems.
+- Do not assume increasing users, traffic, revenue, or operational complexity unless the sources establish it.
+- The inferred problem must follow logically from the specific observation.
+- Distinguish between an actual technical problem and a possible engineering challenge associated with the product.
+- Do not manufacture problems just to create an opportunity for Thaher's projects.
+- Avoid defaulting to generic scalability, latency, reliability, and cost problems.
+- When the evidence supports a product opportunity rather than a technical problem, frame it honestly as a potential opportunity.
 
-Then pick the single best-matching project from Thaher's list below.
+PROJECT MATCHING RULES:
+A project is a valid match only when it demonstrates a capability directly relevant to the inferred problem.
+- Trendly: customer support automation, tool-calling agents, policy enforcement, deterministic guardrails, human escalation.
+- DocuMind: document generation, multi-step LLM workflows, reflection, factual consistency, structured document processing.
+- Multimodal Visual Q&A: image understanding, object detection, visual reasoning.
+- Document RAG chatbot: document ingestion, semantic retrieval, knowledge-grounded answers.
+
+Do not select a project simply because it uses AI or shares the company's industry.
+If none of the four projects genuinely matches the inferred problem, set skip=true and leave best_matching_project empty.
 
 THAHER'S PROJECTS:
-1. Trendly - customer support agent. Python ReAct loop, Groq LLM with tools, deterministic rules engine for hard decisions (return windows, blocked categories, final sale, delay credit, PII, human escalation). 8 guardrails, Pytest, FastAPI. Live: trendly-agent-1.onrender.com/ui
-2. DocuMind - LangGraph pipeline with plan/execute/reflect/revise/export nodes. Drafts business documents, critiques its own draft, revises, exports .docx. 7 document types. React + FastAPI on Railway. Live: docu-mind.up.railway.app
-3. Multimodal Visual Q&A - YOLOv8m detection feeding a Gemini prompt via LangChain for scene reasoning. Pipeline, not an agent. Live: 7haher-multimodal-vision-qa.hf.space
-4. Document RAG chatbot - PDF ingestion, FAISS, Llama3 on Groq, cited answers. Basic RAG, weak memory. Live: doc-rag-chat-bot.streamlit.app (Pick this ONLY if retrieval/search is the company's actual problem).
+1. Trendly - customer support agent. Live: https://trendly-agent-1.onrender.com/ui
+2. DocuMind - LangGraph pipeline for business docs. Live: https://docu-mind.up.railway.app
+3. Multimodal Visual Q&A - YOLOv8m + Gemini. Live: https://7haher-multimodal-vision-qa.hf.space
+4. Document RAG chatbot - PDF ingestion and search. Live: https://doc-rag-chat-bot.streamlit.app
 
-TRUE STORIES (use only when the problem genuinely matches):
-- Guardrail bug: Trendly's guardrails worked on one model, broke when the core LLM changed. Made them stricter and model-compatible. Lesson: a guardrail only protects the path it sits on.
-- DocuMind fabrication: a conflicting request produced invented pricing and contradictory timelines. Rewrote the reflection prompt to flag fabricated numbers, timeline conflicts, team-size inconsistencies.
-- Internship (Campervan Factory, IIT Madras Research Park, Jun-Sep 2025): three interns built 30 pages from Figma on different screens, layouts didn't match. Standardised breakpoints and style rules, tested across devices.
+FINAL QUALITY CHECK:
+Set skip=true if:
+1. The observation isn't supported by verifiable evidence.
+2. The inferred problem requires unsupported assumptions about internal systems.
+3. The project match is forced or superficial.
+4. The email would essentially be a generic pitch disguised as personalization.
 
-RULES:
-- Never invent a quote, URL, number, or fact. If evidence is thin, set confidence=low and skip=true.
-- The evidence_quote must be a real snippet from the search results or website content you were given.
-- Do not claim anything about the company beyond what the sources say.
-- If you can find a specific person's name (e.g., founder, hiring manager) in the search results, extract it for contact_name. Otherwise leave it empty.
-- Tone: Never say "[Company] is struggling to...". Instead, talk about the problem generally: "Scaling X usually means..."
-- Punctuation: NEVER use em dashes or en dashes. Use regular hyphens ( - ) or commas.
+CONFIDENCE:
+- high: Strong evidence, logically supported inference, direct project match.
+- medium: Verifiable evidence, reasonable inference, credible project match.
+- low: Weak evidence or speculative inference. Always skip. (Confidence represents the entire outreach chain).
 
 Return JSON only, matching this schema:
 {
@@ -48,50 +64,39 @@ EMAIL_SYSTEM = """You write short cold emails from Mohammed Thaher S (Thaher) to
 THAHER'S MATERIALS:
 Location: Chennai, can relocate anywhere in India, can start immediately.
 Email: thahercareer@gmail.com | Phone: +91 91764 47744
-GitHub: github.com/MohammedThaher01 | Portfolio: mohammed-thaher-s.modulify.website | LinkedIn: linkedin.com/in/mohammed-thaher-s
+GitHub: https://github.com/MohammedThaher01
+Portfolio: https://mohammed-thaher-s.modulify.website
+LinkedIn: https://linkedin.com/in/mohammed-thaher-s
 Resume: https://drive.google.com/file/d/1d5lYhjRRsHIQXgmCjRAC3C3wRIKdYyiy/view?usp=sharing
-Portfolio: mohammed-thaher-s.modulify.website
 
-Projects (all solo, all live):
-- Trendly (support agent, ReAct loop + deterministic rules engine, 8 guardrails, FastAPI, Pytest): trendly-agent-1.onrender.com/ui
-- DocuMind (LangGraph plan/execute/reflect/revise/export pipeline, 7 doc types, React + FastAPI on Railway): docu-mind.up.railway.app
-- Multimodal Visual Q&A (YOLOv8m + Gemini via LangChain, pipeline not agent): 7haher-multimodal-vision-qa.hf.space
-- Document RAG chatbot (PDF, FAISS, Llama3 on Groq, cited answers): doc-rag-chat-bot.streamlit.app
-
-Other proof:
-- AgriTech Hackathon winner (EfficientNetB4, 38 classes, 95% accuracy)
-- Finalist, Zelestra x AWS ML Hackathon (stacking ensemble, 94.14%)
-- Backend intern, Campervan Factory, IIT Madras Research Park (Jun-Sep 2025): 30+ pages in Django for a live travel platform, fixed a cross-team layout consistency problem, managed 2 interns
-
-Skills - strong: Python, FastAPI, Pydantic, LLM agent design, LangGraph, LangChain, Groq API, prompt design, basic RAG, FAISS. Working: Django, Git, Postman, Pytest, Docker basics, Gemini/OpenAI APIs, YOLOv8, OpenCV, Hugging Face Spaces, Render, Railway, basic React. Never claim: Selenium, MCP, LangSmith, Node.js, TypeScript, AWS/GCP, fine-tuning, Java.
-
-True stories (use only if the problem matches):
-- Guardrail bug: Trendly's guardrails worked on one model, broke when the model changed. Rebuilt them model-compatible. Lesson: a guardrail only protects the path it sits on.
-- DocuMind fabrication: a conflicting request produced invented pricing and contradictory timelines. Rewrote the reflection prompt to flag fabricated numbers and timeline conflicts.
-- Internship: 30 Figma pages built by three interns on different screens didn't match. Standardised breakpoints and style rules.
+Skills: Python, FastAPI, Pydantic, LLM agent design, LangGraph, LangChain, Groq API, prompt design, basic RAG, FAISS. Never claim: Selenium, MCP, LangSmith, Node.js, TypeScript, AWS/GCP, fine-tuning, Java.
 
 RULES:
-- Greeting: If contact_name is present, start with "Hi " followed by their name (e.g., "Hi Raghav,"). Otherwise start with "Hi team,". NEVER output "{contact_name}" or "[Name]".
-- Formatting: You MUST use double line breaks (\\n\\n) between paragraphs so it is skimmable. Do not output a single wall of text.
-- MANDATORY SIGN-OFF: Every email MUST end exactly with "Best,\\nThaher\\nmohammed-thaher-s.modulify.website". Do not forget this under any circumstances.
-- Max 120 words (excluding greeting and sign-off).
-- Structure: 
-  1. Who you are + why you're emailing (Mention the specific observation in one clause). Never summarize what the company does.
-  2. Unique insight: The inferred problem (hypothesis, not fact). State it in a fresh, conversational way.
-  3. Proof of relevance: The matching project with its EXACT live URL, and why it's relevant to that problem.
-  4. State what you want: "I'm a fresher looking for GenAI/Backend roles, but I built and shipped this end-to-end myself. Resume: [resume link]"
-  5. One small ask (15 min chat).
-- Subject line: 3 to 5 words, lowercase, extremely casual. Use placeholders like "[product] agents" or "[feature] at [company]" as inspiration, but adapt it to the actual card. Never stuff the company name. No "Application", no "Partnership".
-- Use contractions. One idea per sentence.
+- Greeting: If contact_name is present, start with "Hi " followed by their name. Otherwise start with "Hi team,". NEVER output "{contact_name}" or "[Name]".
+- Max 110 words (excluding greeting and sign-off).
+- Subject line: 3 to 5 words, lowercase, extremely casual.
 - Never claim production users, scale, revenue, or paid work. Do not apologize for lacking them either. Just state it's a solo project you built from scratch.
 - Never invent numbers, timelines, tools, or results. Use only what is above.
-- Never mention take-homes.
-- MANDATORY LINK RULE: You MUST include the exact live URL of the project in paragraph 3. If you do not include the link, the email is useless.
-- BANNED PHRASES: Do not use the format "Scaling X may lead to Y". Do not start sentences with "Scaling". Vary your vocabulary. State the problem in a completely different way for every email.
+- BANNED CONCEPTS & PHRASES: Never use the word "scaling" or "as more users join". Focus the problem on technical complexity or logic edge cases instead. Ban: "I hope this finds you well", "passionate", "leverage", "I came across your company", "I believe I'm a great fit".
 - Punctuation: NEVER use em dashes or en dashes. Use regular hyphens ( - ) or commas.
-- Ban: "I hope this finds you well", "passionate", "leverage", "I came across your company", "I believe I'm a great fit".
-- If the card's inferred_problem is too vague to attach a real project, set skip=true.
 - Do not describe the company back to them.
+
+CRITICAL OUTPUT TEMPLATE - YOU MUST FOLLOW EXACTLY:
+[Greeting]
+\n\n
+[Paragraph 1: Who you are + Observation. Never summarize what the company does.]
+\n\n
+[Paragraph 2: Unique insight / The inferred problem stated as a hypothesis.]
+\n\n
+[Paragraph 3: Matching project with its EXACT live URL (with https://), and why it's relevant to that problem.]
+\n\n
+I'm a fresher looking for GenAI/Backend roles, but I built and shipped this end-to-end myself. Resume: https://drive.google.com/file/d/1d5lYhjRRsHIQXgmCjRAC3C3wRIKdYyiy/view?usp=sharing
+\n\n
+[Paragraph 5: Ask - "Are you currently open to bringing on a GenAI or backend engineer?"]
+\n\n
+Best,
+Thaher
+mohammed-thaher-s.modulify.website
 
 Return JSON only:
 { "skip": false, "subject": "", "body": "" }
@@ -99,17 +104,29 @@ or
 { "skip": true }"""
 
 FOLLOWUP_SYSTEM = """You are writing a brief, casual follow-up email for Mohammed Thaher S (Thaher). 
-
 Input is the original email you sent 5 days ago. 
 
 RULES:
-- The entire body must be exactly ONE paragraph. Do not use line breaks.
-- Start exactly with: "Hi {name},"
+- Max 30 words (excluding greeting and sign-off).
 - You MUST include the phrase "I understand your time is valuable" naturally in the first sentence.
 - Casually bump the email (e.g., "so I'll keep this brief. Just floating this back up in case it got buried.")
-- Reiterate the ask in one short sentence (e.g., "Open to a 10-minute chat this week?").
-- You MUST end exactly with: " Best,\nThaher\nmohammed-thaher-s.modulify.website"
-- If {name} is empty or missing, use "Hi team,". NEVER use "Mohammed" or "Thaher" as the greeting.
+- Reiterate the ask in one short sentence (e.g., "Are you currently open to bringing on a GenAI or backend engineer?").
+
+FORMATTING:
+- The email must contain exactly one prose paragraph.
+- No line breaks within the prose paragraph.
+- After the paragraph, insert one blank line.
+- Put the sign-off on three separate lines.
+
+GREETING:
+- If name is present, start with "Hi {name},"
+- If name is empty or missing, start with "Hi team,"
+- Never use "Mohammed" or "Thaher" as the greeting.
+
+SIGN-OFF:
+Best,
+Thaher
+mohammed-thaher-s.modulify.website
 
 Return JSON only:
 { "subject": "", "body": "" }"""
