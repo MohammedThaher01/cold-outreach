@@ -4,6 +4,7 @@ import json
 import os
 import random
 import time
+import config
 
 from dotenv import load_dotenv
 
@@ -26,13 +27,13 @@ def _today():
 def _send_with_cap(rows):
     now = _now()
     
-    # 1. Check business hours (9 AM - 5 PM Asia/Kolkata)
+    # 1. Business hours check (9 AM - 5 PM)
     if not (9 <= now.hour < 17):
         print("Outside business hours. Skipping send.")
         return 0
         
-    # 2. Calendar-hour bucket check
     sends_this_hour = 0
+    sent_today = 0
     last_send_time = None
     
     for r in rows:
@@ -42,28 +43,35 @@ def _send_with_cap(rows):
                 if sent_dt.tzinfo is None:
                     sent_dt = sent_dt.replace(tzinfo=TZ)
                 
-                # Check if in same calendar year, month, day, and hour
+                # Count for today
+                if sent_dt.date() == now.date():
+                    sent_today += 1
+                    
+                # Count for this hour
                 if (sent_dt.year == now.year and sent_dt.month == now.month and 
                     sent_dt.day == now.day and sent_dt.hour == now.hour):
                     sends_this_hour += 1
                     
-                # Track most recent successful send overall
                 if not last_send_time or sent_dt > last_send_time:
                     last_send_time = sent_dt
             except:
                 pass
                 
-    # Enforce Max 2 per calendar hour
+    # 2. Daily Cap Check
+    if sent_today >= config.DAILY_CAP:
+        print(f"Daily cap ({config.DAILY_CAP}) reached. Stopping.")
+        return 0
+        
+    # 3. Hourly Cap Check
     if sends_this_hour >= config.HOURLY_CAP:
         print(f"Calendar hour cap ({config.HOURLY_CAP}) reached. Stopping.")
         return 0
         
-    # Enforce Min 30 minutes between sends
+    # 4. 30-Minute Gap Check
     if last_send_time and (now - last_send_time).total_seconds() < 1800:
         print("Less than 30 minutes since last successful send. Stopping.")
         return 0
 
-    # 3. Send exactly 1 email
     sent_count = 0
     for r in rows:
         if r["status"] != "APPROVED":
@@ -76,8 +84,6 @@ def _send_with_cap(rows):
             is_followup = r["subject"].startswith("Re: ")
             in_reply_to = r.get("message_id") if is_followup else None
             
-            # If this throws an exception, the code jumps to 'except', 
-            # meaning store.update is NOT called, so it doesn't count.
             new_msg_id = send.send_email(r["email"], r["subject"], r["body"], in_reply_to=in_reply_to)
             
             new_status = "FOLLOWED_UP" if is_followup else "SENT"
@@ -88,7 +94,6 @@ def _send_with_cap(rows):
             print(f"  failed: {e}")
             
     return sent_count
-
 
 def run_once():
     all_rows = store.load()
@@ -171,7 +176,7 @@ def run_once():
         1 for r in rows
         if r["status"] in ["SENT", "FOLLOWED_UP"] and (r.get("sent_at") or "").startswith(_today())
     )
-    _send_with_cap(rows, cap, sent_today)
+    _send_with_cap(store.load())
 
 
 def cmd_run(_args):
