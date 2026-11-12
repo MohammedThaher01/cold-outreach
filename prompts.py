@@ -49,6 +49,8 @@ THAHER'S MATERIALS:
 Location: Chennai, can relocate anywhere in India, can start immediately.
 Email: thahercareer@gmail.com | Phone: +91 91764 47744
 GitHub: github.com/MohammedThaher01 | Portfolio: mohammed-thaher-s.modulify.website | LinkedIn: linkedin.com/in/mohammed-thaher-s
+Resume: https://drive.google.com/file/d/1d5lYhjRRsHIQXgmCjRAC3C3wRIKdYyiy/view?usp=sharing
+Portfolio: mohammed-thaher-s.modulify.website
 
 Projects (all solo, all live):
 - Trendly (support agent, ReAct loop + deterministic rules engine, 8 guardrails, FastAPI, Pytest): trendly-agent-1.onrender.com/ui
@@ -74,11 +76,11 @@ RULES:
 - MANDATORY SIGN-OFF: Every email MUST end exactly with "Best,\\nThaher\\nmohammed-thaher-s.modulify.website". Do not forget this under any circumstances.
 - Max 120 words (excluding greeting and sign-off).
 - Structure: 
-  1. Mention the observation in one clause as the reason you're writing. Never summarize what the company does.
-  2. The inferred problem (hypothesis, not fact). State it in a fresh, conversational way.
-  3. The matching project with its EXACT live URL (copy the URL exactly from the Projects list above). **Do not put parentheses around the link. Add a space after the link.** Then explain why it's relevant to that problem (do not claim it solves it). 
-  4. One honest line about level: State you are a fresher and these are live solo projects. Frame it with confidence: "I'm a fresher and I built and shipped this end-to-end myself." Do NOT say "no production users" or sound apologetic.
-  5. One small ask (15 min chat or a small task).
+  1. Who you are + why you're emailing (Mention the specific observation in one clause). Never summarize what the company does.
+  2. Unique insight: The inferred problem (hypothesis, not fact). State it in a fresh, conversational way.
+  3. Proof of relevance: The matching project with its EXACT live URL, and why it's relevant to that problem.
+  4. State what you want: "I'm a fresher looking for GenAI/Backend roles, but I built and shipped this end-to-end myself. Resume: [resume link]"
+  5. One small ask (15 min chat).
 - Subject line: 3 to 5 words, lowercase, extremely casual. Use placeholders like "[product] agents" or "[feature] at [company]" as inspiration, but adapt it to the actual card. Never stuff the company name. No "Application", no "Partnership".
 - Use contractions. One idea per sentence.
 - Never claim production users, scale, revenue, or paid work. Do not apologize for lacking them either. Just state it's a solo project you built from scratch.
@@ -97,17 +99,17 @@ or
 { "skip": true }"""
 
 FOLLOWUP_SYSTEM = """You are writing a brief, casual follow-up email for Mohammed Thaher S (Thaher). 
+
 Input is the original email you sent 5 days ago. 
 
 RULES:
-- Max 35 words. Extremely short.
-- Start exactly with: "Hi {name}," (or "Hi team," if no name).
-- First sentence must be exactly: "I understand your time is valuable," (or similar phrasing using that exact hook).
-- Second sentence: Bump the original email up casually (e.g., "just floating this back up" or "wanted to make sure this didn't get buried").
-- Third sentence: Reiterate the ask in one short sentence (e.g., "Open to a 10-minute chat this week?").
-- Do not repeat the original pitch. Do not re-introduce yourself.
-- End exactly with "Best,\\nThaher".
-- NO em dashes. Use regular hyphens.
+- The entire body must be exactly ONE paragraph. Do not use line breaks.
+- Start exactly with: "Hi {name},"
+- You MUST include the phrase "I understand your time is valuable" naturally in the first sentence.
+- Casually bump the email (e.g., "so I'll keep this brief. Just floating this back up in case it got buried.")
+- Reiterate the ask in one short sentence (e.g., "Open to a 10-minute chat this week?").
+- You MUST end exactly with: " Best,\nThaher\nmohammed-thaher-s.modulify.website"
+- If {name} is empty or missing, use "Hi team,". NEVER use "Mohammed" or "Thaher" as the greeting.
 
 Return JSON only:
 { "subject": "", "body": "" }"""

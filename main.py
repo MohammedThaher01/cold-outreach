@@ -25,22 +25,33 @@ def _today():
 
 def _send_with_cap(rows, cap, sent_today):
     for r in rows:
-        if r["status"] != "approved":
+        if r["status"] != "APPROVED":
             continue
         if sent_today >= cap:
             print(f"daily cap {cap} reached, stopping")
             return sent_today
         try:
             print(f"sending to {r['email']}...")
-            send.send_email(r["email"], r["subject"], r["body"])
             
-            # If it's a follow-up, mark it as followed_up so it doesn't send again.
-            new_status = "followed_up" if r["subject"].startswith("Re: ") else "sent"
-            store.update(r["email"], status=new_status, sent_at=_now().isoformat())
+            is_followup = r["subject"].startswith("Re: ")
+            in_reply_to = r.get("message_id") if is_followup else None
+            
+            new_msg_id = send.send_email(
+                r["email"], r["subject"], r["body"], 
+                in_reply_to=in_reply_to
+            )
+            
+            new_status = "FOLLOWED_UP" if is_followup else "SENT"
+            store.update(
+                r["email"], 
+                status=new_status, 
+                sent_at=_now().isoformat(),
+                message_id=new_msg_id
+            )
             
             sent_today += 1
             print(f"  sent. Exiting so cron can wait an hour for the next one.")
-            return sent_today  # Sends 1 and stops so cron can handle the pacing.
+            return sent_today
         except Exception as e:
             print(f"  failed: {e}")
     return sent_today
@@ -56,13 +67,13 @@ def run_once():
 
     # Phase 1: research NEW rows
     for r in store.load():
-        if r["status"].strip() != "NEW":
+        if r["status"] != "NEW":
             continue
         company, url = r["company_name"], r["company_url"]
         if not company:
             company, url = research.infer_company_from_email(r["email"])
         if not company:
-            store.update(r["email"], status="need_company")
+            store.update(r["email"], status="NEED_COMPANY")
             print(f"{r['email']}: no company name and free email domain, flagged")
             continue
 
@@ -76,14 +87,14 @@ def run_once():
         if card.get("skip"):
             store.update(
                 r["email"],
-                status="needs_manual_research",
+                status="NEEDS_MANUAL_RESEARCH",
                 insight_card=json.dumps(card),
             )
             print("  skipped (weak evidence)")
         else:
             store.update(
                 r["email"],
-                status="ready_for_email",
+                status="READY_FOR_EMAIL",
                 insight_card=json.dumps(card),
             )
             print(f"  ok: {card.get('specific_observation', '')[:70]}")
@@ -91,7 +102,7 @@ def run_once():
 
     # Phase 2: generate emails for ready rows
     for r in store.load():
-        if r["status"] != "ready_for_email":
+        if r["status"] != "READY_FOR_EMAIL":
             continue
         card = json.loads(r["insight_card"])
         print(f"writing email for {r['company_name']}...")
@@ -102,12 +113,12 @@ def run_once():
             continue
 
         if out.get("skip"):
-            store.update(r["email"], status="skipped")
+            store.update(r["email"], status="SKIPPED")
             print("  skipped")
         else:
             store.update(
                 r["email"],
-                status="draft_review",
+                status="DRAFT_REVIEW",
                 subject=out["subject"],
                 body=out["body"],
             )
@@ -117,15 +128,15 @@ def run_once():
     # Phase 3: auto-approve if enabled
     if auto:
         for r in store.load():
-            if r["status"] == "draft_review":
-                store.update(r["email"], status="approved")
+            if r["status"] == "DRAFT_REVIEW":
+                store.update(r["email"], status="APPROVED")
                 print(f"auto-approved: {r['email']}")
 
     # Phase 4: send approved rows up to daily cap
     rows = store.load()
     sent_today = sum(
         1 for r in rows
-        if r["status"] in ["sent", "followed_up"] and (r.get("sent_at") or "").startswith(_today())
+        if r["status"] in ["SENT", "FOLLOWED_UP"] and (r.get("sent_at") or "").startswith(_today())
     )
     _send_with_cap(rows, cap, sent_today)
 
@@ -140,8 +151,7 @@ def cmd_followup(_args):
     generated_count = 0
     
     for r in rows:
-        # Only follow up on emails that were sent, not ones that already got a follow-up or bounced.
-        if r["status"] != "sent" or not r.get("sent_at"):
+        if r["status"] != "SENT" or not r.get("sent_at"):
             continue
             
         sent_date = datetime.datetime.fromisoformat(r["sent_at"]).date()
@@ -150,10 +160,11 @@ def cmd_followup(_args):
         if days_since >= 5:
             print(f"generating follow-up for {r['email']} (sent {days_since} days ago)...")
             
-            contact_name = ""
+            contact_name = "team"
             try:
                 card = json.loads(r.get("insight_card", "{}"))
-                contact_name = card.get("contact_name", "")
+                if card.get("contact_name"):
+                    contact_name = card.get("contact_name")
             except:
                 pass
                 
@@ -161,7 +172,7 @@ def cmd_followup(_args):
                 out = generate.generate_followup(r["subject"], r["body"], contact_name)
                 store.update(
                     r["email"], 
-                    status="approved", 
+                    status="APPROVED", 
                     subject=out["subject"], 
                     body=out["body"]
                 )
@@ -189,13 +200,14 @@ def cmd_add(args):
         "subject": "",
         "body": "",
         "sent_at": "",
+        "message_id": ""
     })
     store.save(rows)
     print(f"added {args.email}")
 
 
 def cmd_list(_args):
-    drafts = [r for r in store.load() if r["status"] == "draft_review"]
+    drafts = [r for r in store.load() if r["status"] == "DRAFT_REVIEW"]
     if not drafts:
         print("no drafts to review")
         return
@@ -209,17 +221,17 @@ def cmd_list(_args):
 
 
 def cmd_approve(args):
-    store.update(args.email, status="approved")
+    store.update(args.email, status="APPROVED")
     print(f"approved {args.email}")
 
 
 def cmd_reject(args):
-    store.update(args.email, status="rejected")
+    store.update(args.email, status="REJECTED")
     print(f"rejected {args.email}")
 
 
 def cmd_bounce(args):
-    store.update(args.email, status="bounced")
+    store.update(args.email, status="BOUNCED")
     print(f"marked {args.email} as bounced")
 
 
@@ -228,11 +240,10 @@ def cmd_digest(_args):
     rows = store.load()
     sent_today = [
         r for r in rows
-        if r["status"] in ["sent", "followed_up"] and (r.get("sent_at") or "").startswith(today)
+        if r["status"] in ["SENT", "FOLLOWED_UP"] and (r.get("sent_at") or "").startswith(today)
     ]
-    skipped = [r for r in rows if r["status"] == "skipped"]
-    review = [r for r in rows if r["status"] == "needs_manual_research"]
-    no_company = [r for r in rows if r["status"] == "need_company"]
+    skipped = [r for r in rows if r["status"] in ["SKIPPED", "NEEDS_MANUAL_RESEARCH"]]
+    no_company = [r for r in rows if r["status"] == "NEED_COMPANY"]
 
     lines = [f"Cold outreach digest - {today}", ""]
     lines.append(f"Sent today: {len(sent_today)}")
@@ -244,13 +255,8 @@ def cmd_digest(_args):
         for r in skipped[-10:]:
             lines.append(f"  {r['company_name'] or r['email']}")
 
-    if review:
-        lines.append(f"\nNeed your input: {len(review)}")
-        for r in review[-10:]:
-            lines.append(f"  {r['company_name'] or r['email']}")
-
     if no_company:
-        lines.append(f"\nNo company name and free email domain: {len(no_company)}")
+        lines.append(f"\nNo company name: {len(no_company)}")
         for r in no_company[-10:]:
             lines.append(f"  {r['email']}")
 
@@ -263,27 +269,27 @@ def main():
     p = argparse.ArgumentParser(prog="cold-outreach")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    sub.add_parser("run", help="full pipeline: research, generate, send").set_defaults(func=cmd_run)
-    sub.add_parser("list", help="show drafts awaiting review").set_defaults(func=cmd_list)
-    sub.add_parser("digest", help="send a daily summary to SELF_EMAIL").set_defaults(func=cmd_digest)
+    sub.add_parser("run", help="full pipeline").set_defaults(func=cmd_run)
+    sub.add_parser("list", help="show drafts").set_defaults(func=cmd_list)
+    sub.add_parser("digest", help="send daily summary").set_defaults(func=cmd_digest)
     
-    f = sub.add_parser("followup", help="generate follow-ups for emails sent 5+ days ago")
+    f = sub.add_parser("followup", help="generate follow-ups")
     f.set_defaults(func=cmd_followup)
 
-    a = sub.add_parser("add", help="add a lead from the command line")
+    a = sub.add_parser("add", help="add a lead")
     a.add_argument("email")
     a.add_argument("--company", default=None)
     a.set_defaults(func=cmd_add)
 
-    ap = sub.add_parser("approve", help="approve a draft by email")
+    ap = sub.add_parser("approve", help="approve a draft")
     ap.add_argument("email")
     ap.set_defaults(func=cmd_approve)
 
-    rj = sub.add_parser("reject", help="reject a draft by email")
+    rj = sub.add_parser("reject", help="reject a draft")
     rj.add_argument("email")
     rj.set_defaults(func=cmd_reject)
 
-    b = sub.add_parser("bounce", help="mark an email as bounced")
+    b = sub.add_parser("bounce", help="mark as bounced")
     b.add_argument("email")
     b.set_defaults(func=cmd_bounce)
 
