@@ -15,6 +15,7 @@ TECHNICAL INFERENCE RULES:
 - Do not manufacture problems just to create an opportunity for Thaher's projects.
 - Avoid defaulting to generic scalability, latency, reliability, and cost problems.
 - When the evidence supports a product opportunity rather than a technical problem, frame it honestly as a potential opportunity.
+- If funding information is provided (e.g., "$3M Pre-seed"), you MUST include it in the `specific_observation` or `personalization_hook`. Congratulations on recent funding is a highly effective hook.
 
 PROJECT MATCHING RULES:
 A project is a valid match only when it demonstrates a capability directly relevant to the inferred problem.

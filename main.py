@@ -7,7 +7,6 @@ import time
 import config
 
 from dotenv import load_dotenv
-
 load_dotenv()
 
 import store
@@ -15,9 +14,11 @@ import research
 import generate
 import send
 
+# Assuming you added this to config.py or it's here
+TZ = datetime.timezone.utc # Replace with your timezone logic if different (e.g., Asia/Kolkata)
 
 def _now():
-    return datetime.datetime.now()
+    return datetime.datetime.now(TZ)
 
 
 def _today():
@@ -43,11 +44,9 @@ def _send_with_cap(rows):
                 if sent_dt.tzinfo is None:
                     sent_dt = sent_dt.replace(tzinfo=TZ)
                 
-                # Count for today
                 if sent_dt.date() == now.date():
                     sent_today += 1
                     
-                # Count for this hour
                 if (sent_dt.year == now.year and sent_dt.month == now.month and 
                     sent_dt.day == now.day and sent_dt.hour == now.hour):
                     sends_this_hour += 1
@@ -57,17 +56,14 @@ def _send_with_cap(rows):
             except:
                 pass
                 
-    # 2. Daily Cap Check
     if sent_today >= config.DAILY_CAP:
         print(f"Daily cap ({config.DAILY_CAP}) reached. Stopping.")
         return 0
         
-    # 3. Hourly Cap Check
     if sends_this_hour >= config.HOURLY_CAP:
         print(f"Calendar hour cap ({config.HOURLY_CAP}) reached. Stopping.")
         return 0
         
-    # 4. 30-Minute Gap Check
     if last_send_time and (now - last_send_time).total_seconds() < 1800:
         print("Less than 30 minutes since last successful send. Stopping.")
         return 0
@@ -76,7 +72,7 @@ def _send_with_cap(rows):
     for r in rows:
         if r["status"] != "APPROVED":
             continue
-        if sent_count >= 1: # Max 1 per execution
+        if sent_count >= 1:
             break
             
         try:
@@ -101,7 +97,6 @@ def run_once():
     print(f"loaded {len(all_rows)} leads, {new_count} with status NEW")
 
     auto = os.environ.get("AUTO_SEND", "0") == "1"
-    cap = int(os.environ.get("DAILY_CAP", "8"))
 
     # Phase 1: research NEW rows
     for r in store.load():
@@ -117,9 +112,21 @@ def run_once():
 
         print(f"researching {company}...")
         try:
-            card = research.research_company(company, url or None)
+            # PASS THE NEW DESCRIPTION AND FUNDING INFO HERE
+            card = research.research_company(
+                company, 
+                url or None,
+                description=r.get("description", ""),
+                funding_info=r.get("funding_info", "")
+            )
         except Exception as e:
             print(f"  failed: {e}")
+            continue
+
+        # Safety check
+        if not card:
+            print("  failed: research returned None")
+            store.update(r["email"], status="NEEDS_MANUAL_RESEARCH")
             continue
 
         if card.get("skip"):
@@ -171,11 +178,6 @@ def run_once():
                 print(f"auto-approved: {r['email']}")
 
     # Phase 4: send approved rows up to daily cap
-    rows = store.load()
-    sent_today = sum(
-        1 for r in rows
-        if r["status"] in ["SENT", "FOLLOWED_UP"] and (r.get("sent_at") or "").startswith(_today())
-    )
     _send_with_cap(store.load())
 
 
@@ -228,6 +230,8 @@ def cmd_add(args):
     if any(r["email"] == args.email for r in rows):
         print(f"{args.email} already exists")
         return
+    
+    # Initialize with the new columns
     rows.append({
         "name": "",
         "email": args.email,
@@ -238,7 +242,9 @@ def cmd_add(args):
         "subject": "",
         "body": "",
         "sent_at": "",
-        "message_id": ""
+        "message_id": "",
+        "description": "",
+        "funding_info": ""
     })
     store.save(rows)
     print(f"added {args.email}")

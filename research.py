@@ -37,17 +37,11 @@ def scrape(url: str, limit: int = 4000) -> str:
     except Exception:
         return ""
 
-# --- NEW EXACT PHRASE MATCHER ---
 def normalize_text(text: str) -> str:
-    # 1. Decode HTML entities
     text = html.unescape(text)
-    # 2. Unicode normalization (NFKD)
     text = unicodedata.normalize('NFKD', text)
-    # 3. Lowercase
     text = text.lower()
-    # 4. Remove punctuation (keep only alphanumeric and spaces)
     text = re.sub(r'[^\w\s]', '', text)
-    # 5. Normalize whitespace
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
@@ -56,60 +50,83 @@ def verify_continuous_quote(quote: str, source_text: str) -> bool:
         return False
     norm_quote = normalize_text(quote)
     norm_source = normalize_text(source_text)
-    # Must appear as a continuous phrase in the exact word order
     return norm_quote in norm_source
 
-def research_company(company_name: str, company_url: str | None = None) -> dict:
-    if not company_url:
-        company_url = f"https://{company_name.lower().replace(' ', '')}.com"
+def research_company(company_name: str, company_url: str | None = None, description: str = "", funding_info: str = "") -> dict:
+    
+    page_text = ""
+    snippets = ""
+    source_url = company_url or ""
 
-    results = search(f'"{company_name}" product OR features OR pricing')
-    if not results:
-        results = search(company_name)
+    # IF WE HAVE RICH CSV DATA, BYPASS THE WEB SCRAPE
+    if description or funding_info:
+        print("  Using rich CSV data (skipping web scrape)...")
+        snippets = f"Company Description: {description}\nFunding Info: {funding_info}"
+        page_text = snippets 
+    else:
+        if not company_url:
+            company_url = f"https://{company_name.lower().replace(' ', '')}.com"
 
-    snippets = "\n\n".join(f"[{r.get('title','')}] {r.get('href','')}\n{r.get('body','')}" for r in results)
-    page_text = scrape(company_url)
-    source_url = company_url
+        results = search(f'"{company_name}" product OR features OR pricing')
+        if not results:
+            results = search(company_name)
 
-    if len(page_text) < 100 and results:
-        for r in results[:2]:
-            href = r.get("href", "")
-            if href:
-                page_text = scrape(href)
-                if len(page_text) > 100:
-                    source_url = href
-                    break
+        snippets = "\n\n".join(f"[{r.get('title','')}] {r.get('href','')}\n{r.get('body','')}" for r in results)
+        page_text = scrape(company_url)
+        source_url = company_url
 
-    user_msg = f"company_name: {company_name}\ncompany_url: {source_url}\n\nSEARCH RESULTS:\n{snippets}\n\nWEBSITE CONTENT:\n{page_text}\n\nReturn the insight card JSON."
+        if len(page_text) < 100 and results:
+            for r in results[:2]:
+                href = r.get("href", "")
+                if href:
+                    page_text = scrape(href)
+                    if len(page_text) > 100:
+                        source_url = href
+                        break
 
-    resp = client.chat.completions.create(
-        model="openai/gpt-oss-120b",
-        messages=[
-            {"role": "system", "content": RESEARCH_SYSTEM},
-            {"role": "user", "content": user_msg},
-        ],
-        response_format={"type": "json_object"},
-        temperature=0.3,
-    )
-    card = json.loads(resp.choices[0].message.content)
+    user_msg = f"""company_name: {company_name}
+company_url: {source_url}
+
+SEARCH RESULTS / PROVIDED DATA:
+{snippets}
+
+WEBSITE CONTENT:
+{page_text}
+
+Return the insight card JSON."""
+
+    try:
+        resp = client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[
+                {"role": "system", "content": RESEARCH_SYSTEM},
+                {"role": "user", "content": user_msg},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.3,
+        )
+        card = json.loads(resp.choices[0].message.content)
+    except Exception as e:
+        print(f"  [Reject] LLM failed to generate valid JSON: {e}")
+        return {"skip": True, "confidence": "low"}
     
     # VALIDATION
     if card.get("skip") or card.get("confidence") == "low":
         card["skip"] = True
         return card
         
-    # Verify exact continuous phrase
     if not verify_continuous_quote(card.get("evidence_quote", ""), snippets + " " + page_text):
         print("  [Reject] Evidence quote is paraphrased or fabricated.")
         card["skip"] = True
         return card
         
     if card.get("best_matching_project") not in config.PROJECTS:
-        print("  [Reject] Invalid project selected.")
+        print(f"  [Reject] Invalid project selected: {card.get('best_matching_project')}")
         card["skip"] = True
         return card
 
     card.setdefault("company_name", company_name)
     if source_url and not card.get("source_url"):
         card["source_url"] = source_url
+        
     return card

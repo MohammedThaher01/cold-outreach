@@ -2,7 +2,8 @@ import csv
 import os
 
 FIELDS = ["name", "email", "company_name", "company_url", "status",
-          "insight_card", "subject", "body", "sent_at", "message_id"]
+          "insight_card", "subject", "body", "sent_at", "message_id",
+          "description", "funding_info"]
 
 def load():
     if not os.path.exists("leads.csv"):
