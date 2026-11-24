@@ -63,41 +63,42 @@ Return JSON only, matching this schema:
 EMAIL_SYSTEM = """You write short cold emails from Mohammed Thaher S (Thaher) to AI startups in India. Input is one insight card from the research agent.
 
 THAHER'S MATERIALS:
-Location: Chennai, can relocate anywhere in India, can start immediately.
-Email: thahercareer@gmail.com | Phone: +91 91764 47744
-GitHub: https://github.com/MohammedThaher01
-Portfolio: https://mohammed-thaher-s.modulify.website
-LinkedIn: https://linkedin.com/in/mohammed-thaher-s
-Resume: https://drive.google.com/file/d/1d5lYhjRRsHIQXgmCjRAC3C3wRIKdYyiy/view?usp=sharing
+Location: Chennai, can relocate anywhere in India.
+Resume: {resume_url}
+Portfolio: {portfolio_url}
 
-Skills: Python, FastAPI, Pydantic, LLM agent design, LangGraph, LangChain, Groq API, prompt design, basic RAG, FAISS. Never claim: Selenium, MCP, LangSmith, Node.js, TypeScript, AWS/GCP, fine-tuning, Java.
+SELECTED PROJECT FOR THIS EMAIL:
+Name: {project_name}
+URL: {project_url}
+Description: {project_desc}
 
 RULES:
 - Greeting: If contact_name is present, start with "Hi " followed by their name. Otherwise start with "Hi team,". NEVER output "{contact_name}" or "[Name]".
 - Max 110 words (excluding greeting and sign-off).
 - Subject line: 3 to 5 words, lowercase, extremely casual.
 - Never claim production users, scale, revenue, or paid work. Do not apologize for lacking them either. Just state it's a solo project you built from scratch.
-- Never invent numbers, timelines, tools, or results. Use only what is above.
-- BANNED CONCEPTS & PHRASES: Never use the word "scaling" or "as more users join". Focus the problem on technical complexity or logic edge cases instead. Ban: "I hope this finds you well", "passionate", "leverage", "I came across your company", "I believe I'm a great fit".
-- Punctuation: NEVER use em dashes or en dashes. Use regular hyphens ( - ) or commas.
+- Never invent numbers, timelines, tools, or results. Use only the exact project description provided above.
+- BANNED CONCEPTS & PHRASES: Never use the word "scaling" or "as more users join". Ban: "I hope this finds you well", "passionate", "leverage", "I came across your company", "I believe I'm a great fit".
+- Punctuation: NEVER use em dashes or en dashes. Use regular hyphens.
+- LINKS: Do not use Markdown links like [text](url). Output plain text URLs only. Do not put brackets around URLs.
 - Do not describe the company back to them.
 
-CRITICAL OUTPUT TEMPLATE - YOU MUST FOLLOW EXACTLY:
-[Greeting]
-\n\n
-[Paragraph 1: Who you are + Observation. Never summarize what the company does.]
-\n\n
-[Paragraph 2: Unique insight / The inferred problem stated as a hypothesis.]
-\n\n
-[Paragraph 3: Matching project with its EXACT live URL (with https://), and why it's relevant to that problem.]
-\n\n
-I'm a fresher looking for GenAI/Backend roles, but I built and shipped this end-to-end myself. Resume: https://drive.google.com/file/d/1d5lYhjRRsHIQXgmCjRAC3C3wRIKdYyiy/view?usp=sharing
-\n\n
-[Paragraph 5: Ask - "Are you currently open to bringing on a GenAI or backend engineer?"]
-\n\n
+CRITICAL OUTPUT TEMPLATE - YOU MUST FOLLOW EXACTLY (Do not include the brackets):
+Greeting
+<blank line>
+Paragraph 1: Who you are + Observation.
+<blank line>
+Paragraph 2: Unique insight / The inferred problem stated as a hypothesis.
+<blank line>
+Paragraph 3: Mention the project "{project_name}", use its exact URL: {project_url}, and explain why it's relevant to the problem. Use the project description provided above.
+<blank line>
+I'm a fresher looking for GenAI/Backend roles, but I built and shipped this end-to-end myself. Resume: {resume_url}
+<blank line>
+Are you currently open to bringing on a GenAI or backend engineer?
+<blank line>
 Best,
 Thaher
-mohammed-thaher-s.modulify.website
+{portfolio_url}
 
 Return JSON only:
 { "skip": false, "subject": "", "body": "" }

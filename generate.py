@@ -42,14 +42,26 @@ def validate_email(body: str) -> bool:
     return True
 
 def generate_email(card: dict) -> dict:
-    # Gate 1: Research Validation
     if card.get("skip") or card.get("confidence") == "low":
         return {"skip": True}
+
+    project_name = card.get("best_matching_project")
+    if project_name not in config.PROJECTS:
+        return {"skip": True}
+
+    project_info = config.PROJECTS[project_name]
+    
+    # Inject the exact variables into the prompt
+    system_prompt = EMAIL_SYSTEM.replace("{project_name}", project_name)
+    system_prompt = system_prompt.replace("{project_url}", project_info["url"])
+    system_prompt = system_prompt.replace("{project_desc}", project_info["description"])
+    system_prompt = system_prompt.replace("{resume_url}", config.RESUME_URL)
+    system_prompt = system_prompt.replace("{portfolio_url}", config.PORTFOLIO_URL)
 
     resp = client.chat.completions.create(
         model="openai/gpt-oss-120b",
         messages=[
-            {"role": "system", "content": EMAIL_SYSTEM},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": json.dumps(card)},
         ],
         response_format={"type": "json_object"},
@@ -60,8 +72,7 @@ def generate_email(card: dict) -> dict:
     if not out.get("subject") or not out.get("body"):
         return {"skip": True}
         
-    # Gate 2: Email Validation
-    if not validate_email(out["body"]):
+    if not validate_email(out["subject"], out["body"], project_name):
         return {"skip": True}
         
     return out
