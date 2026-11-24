@@ -3,42 +3,68 @@ import os
 import re
 from groq import Groq
 from prompts import EMAIL_SYSTEM, FOLLOWUP_SYSTEM
+import config
 
 client = Groq(api_key=os.environ["GROQ_API_KEY"])
 
-def validate_email(body: str) -> bool:
-    # 1. Check for banned words
-    if "scaling" in body.lower() or "scalability" in body.lower():
-        print("  validation failed: contains banned word 'scaling'")
+def count_words(text: str) -> int:
+    # Exclude signature if present
+    text = re.sub(r'Best,[\s\S]*$', '', text).strip()
+    # Use regex to count actual words, ignoring punctuation
+    return len(re.findall(r'\b\w+\b', text))
+
+def validate_email(subject: str, body: str, expected_project_name: str) -> bool:
+    # 1. Subject validation (3-5 words, lowercase)
+    subj_words = subject.strip().split()
+    if not (3 <= len(subj_words) <= 5):
+        print(f"  validation failed: subject has {len(subj_words)} words (needs 3-5)")
         return False
-        
-    # 2. Check for required elements
-    if "Are you currently open to bringing on a GenAI or backend engineer" not in body:
-        print("  validation failed: missing hiring CTA")
+    if subject != subject.lower():
+        print("  validation failed: subject is not lowercase")
         return False
-        
-    if "mohammed-thaher-s.modulify.website" not in body:
-        print("  validation failed: missing correct portfolio link")
-        return False
-        
-    # 3. Check for EXACT resume link
-    resume_url = "https://drive.google.com/file/d/1d5lYhjRRsHIQXgmCjRAC3C3wRIKdYyiy/view?usp=sharing"
+
+    # 2. Required static elements
+    resume_url = config.RESUME_URL
+    portfolio_url = config.PORTFOLIO_URL
+    expected_cta = "Are you currently open to bringing on a GenAI or backend engineer?"
+    
     if resume_url not in body:
-        print("  validation failed: missing or incorrect resume link")
+        print("  validation failed: missing exact resume URL")
+        return False
+    if portfolio_url not in body:
+        print("  validation failed: missing exact portfolio URL")
+        return False
+    if expected_cta not in body:
+        print("  validation failed: missing exact CTA")
         return False
         
-    # 4. Check for placeholders
+    # 3. Required project URL
+    if expected_project_name not in config.PROJECTS:
+        return False
+    expected_project_url = config.PROJECTS[expected_project_name]["url"]
+    if expected_project_url not in body:
+        print(f"  validation failed: missing exact project URL for {expected_project_name}")
+        return False
+
+    # 4. Placeholders and Banned words
     if "{name}" in body or "[Name]" in body or "[resume link]" in body:
         print("  validation failed: unresolved placeholder")
         return False
-        
-    # 5. Word count (excluding signature)
-    inner = re.sub(r'Best,[\s\S]*$', '', body).strip()
-    word_count = len(inner.split())
-    if word_count > 120:
-        print(f"  validation failed: {word_count} words (max 120)")
+    if "scaling" in body.lower() or "as more users join" in body.lower():
+        print("  validation failed: contains banned word 'scaling'")
         return False
         
+    # 5. Word count
+    words = count_words(body)
+    if words > 110:
+        print(f"  validation failed: {words} words (max 110)")
+        return False
+        
+    # 6. Signature
+    if not body.strip().endswith(f"Best,\nThaher\n{portfolio_url}"):
+        print("  validation failed: signature formatting incorrect")
+        return False
+
     return True
 
 def generate_email(card: dict) -> dict:
@@ -92,6 +118,9 @@ def generate_followup(original_subject: str, original_body: str, contact_name: s
     )
     out = json.loads(resp.choices[0].message.content)
     
+    if count_words(out["body"]) > 30:
+        return {"skip": True}
+        
     clean_subject = original_subject.replace("Re: ", "")
     out["subject"] = f"Re: {clean_subject}"
     
