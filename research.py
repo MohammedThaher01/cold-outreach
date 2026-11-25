@@ -120,10 +120,17 @@ Return the insight card JSON."""
         card["skip"] = True
         return card
         
-    if card.get("best_matching_project") not in config.PROJECTS:
-        print(f"  [Reject] Invalid project selected: {card.get('best_matching_project')}")
+    # Clean up the project name if the LLM added descriptions
+    project_name = card.get("best_matching_project", "")
+    if " - " in project_name:
+        project_name = project_name.split(" - ")[0].strip()
+    
+    if project_name not in config.PROJECTS:
+        print(f"  [Reject] Invalid project selected: {project_name}")
         card["skip"] = True
         return card
+    else:
+        card["best_matching_project"] = project_name
 
     card.setdefault("company_name", company_name)
     if source_url and not card.get("source_url"):

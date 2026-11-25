@@ -10,7 +10,9 @@ client = Groq(api_key=os.environ["GROQ_API_KEY"])
 def count_words(text: str) -> int:
     # Exclude signature if present
     text = re.sub(r'Best,[\s\S]*$', '', text).strip()
-    # Use regex to count actual words, ignoring punctuation
+    # Remove URLs from the text so they don't count as words
+    text = re.sub(r'https?://\S+', '', text)
+    # Use regex to count actual words
     return len(re.findall(r'\b\w+\b', text))
 
 def validate_email(subject: str, body: str, expected_project_name: str) -> bool:
@@ -26,16 +28,16 @@ def validate_email(subject: str, body: str, expected_project_name: str) -> bool:
     # 2. Required static elements
     resume_url = config.RESUME_URL
     portfolio_url = config.PORTFOLIO_URL
-    expected_cta = "Are you currently open to bringing on a GenAI or backend engineer?"
     
+    if "open to bringing on a GenAI or backend engineer" not in body:
+        print("  validation failed: missing hiring CTA")
+        return False
+        
     if resume_url not in body:
         print("  validation failed: missing exact resume URL")
         return False
     if portfolio_url not in body:
         print("  validation failed: missing exact portfolio URL")
-        return False
-    if expected_cta not in body:
-        print("  validation failed: missing exact CTA")
         return False
         
     # 3. Required project URL
@@ -54,10 +56,10 @@ def validate_email(subject: str, body: str, expected_project_name: str) -> bool:
         print("  validation failed: contains banned word 'scaling'")
         return False
         
-    # 5. Word count
+    # 5. Word count (Now that URLs are removed, max 120 is very generous)
     words = count_words(body)
-    if words > 110:
-        print(f"  validation failed: {words} words (max 110)")
+    if words > 120:
+        print(f"  validation failed: {words} words (max 120)")
         return False
         
     # 6. Signature
@@ -66,7 +68,7 @@ def validate_email(subject: str, body: str, expected_project_name: str) -> bool:
         return False
 
     return True
-
+    
 def generate_email(card: dict) -> dict:
     if card.get("skip") or card.get("confidence") == "low":
         return {"skip": True}

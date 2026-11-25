@@ -23,6 +23,7 @@ A project is a valid match only when it demonstrates a capability directly relev
 - DocuMind: document generation, multi-step LLM workflows, reflection, factual consistency, structured document processing.
 - Multimodal Visual Q&A: image understanding, object detection, visual reasoning.
 - Document RAG chatbot: document ingestion, semantic retrieval, knowledge-grounded answers.
+- In the JSON output, the `best_matching_project` field must contain EXACTLY one of these strings: "Trendly", "DocuMind", "Multimodal Visual Q&A", "Document RAG chatbot". Do not add any descriptive text to this field.
 
 Do not select a project simply because it uses AI or shares the company's industry.
 If none of the four projects genuinely matches the inferred problem, set skip=true and leave best_matching_project empty.
