@@ -5,6 +5,7 @@ import os
 import random
 import time
 import config
+from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -14,8 +15,8 @@ import research
 import generate
 import send
 
-# Assuming you added this to config.py or it's here
-TZ = datetime.timezone.utc # Replace with your timezone logic if different (e.g., Asia/Kolkata)
+# Use your local timezone for business hours
+TZ = ZoneInfo("Asia/Kolkata")
 
 def _now():
     return datetime.datetime.now(TZ)
@@ -28,7 +29,7 @@ def _today():
 def _send_with_cap(rows):
     now = _now()
     
-    # 1. Business hours check (9 AM - 5 PM)
+    # 1. Business hours check (9 AM - 5 PM IST)
     if not (9 <= now.hour < 17):
         print("Outside business hours. Skipping send.")
         return 0
@@ -97,11 +98,18 @@ def run_once():
     print(f"loaded {len(all_rows)} leads, {new_count} with status NEW")
 
     auto = os.environ.get("AUTO_SEND", "0") == "1"
+    batch_limit = 16 # Max to process per run to avoid API rate limits
 
     # Phase 1: research NEW rows
+    research_count = 0
     for r in store.load():
         if r["status"] != "NEW":
             continue
+            
+        if research_count >= batch_limit:
+            print(f"Batch research limit ({batch_limit}) reached. Remaining will process next run.")
+            break
+            
         company, url = r["company_name"], r["company_url"]
         if not company:
             company, url = research.infer_company_from_email(r["email"])
@@ -112,7 +120,6 @@ def run_once():
 
         print(f"researching {company}...")
         try:
-            # PASS THE NEW DESCRIPTION AND FUNDING INFO HERE
             card = research.research_company(
                 company, 
                 url or None,
@@ -123,7 +130,6 @@ def run_once():
             print(f"  failed: {e}")
             continue
 
-        # Safety check
         if not card:
             print("  failed: research returned None")
             store.update(r["email"], status="NEEDS_MANUAL_RESEARCH")
@@ -143,12 +149,20 @@ def run_once():
                 insight_card=json.dumps(card),
             )
             print(f"  ok: {card.get('specific_observation', '')[:70]}")
+            
+        research_count += 1
         time.sleep(2)
 
     # Phase 2: generate emails for ready rows
+    generate_count = 0
     for r in store.load():
         if r["status"] != "READY_FOR_EMAIL":
             continue
+            
+        if generate_count >= batch_limit:
+            print(f"Batch generation limit ({batch_limit}) reached. Remaining will process next run.")
+            break
+            
         card = json.loads(r["insight_card"])
         print(f"writing email for {r['company_name']}...")
         try:
@@ -168,6 +182,8 @@ def run_once():
                 body=out["body"],
             )
             print(f"  subject: {out['subject']}")
+            
+        generate_count += 1
         time.sleep(1)
 
     # Phase 3: auto-approve if enabled
@@ -231,7 +247,6 @@ def cmd_add(args):
         print(f"{args.email} already exists")
         return
     
-    # Initialize with the new columns
     rows.append({
         "name": "",
         "email": args.email,
